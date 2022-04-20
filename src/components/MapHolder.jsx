@@ -3,49 +3,49 @@ import BingMapsReact from 'bingmaps-react'
 import { ReactBingmaps } from 'react-bingmaps'
 import './MapHolder.css'
 import db from '../firebase'
-import { collection, onSnapshot, QuerySnapshot } from 'firebase/firestore'
+import { collection, query, onSnapshot, where } from 'firebase/firestore'
 
 function MapHolder() {
   const [polylineCoordsArray, setPolylineCoordsArray] = useState([])
-  const [mapCenter, setMapCenter] = useState([25, 45])
-  useEffect(() => {
-    onSnapshot(collection(db, 'vehicles'), (snapshot) => {
-      //console.log(snapshot.docs[2].data().providedWayPoints)
-      var coordsForPolyline = []
-      snapshot.docs[2].data().providedWayPoints.map((obj) => {
-        coordsForPolyline.push([obj.latitude, obj.longitude])
+  const [mapCenter, setMapCenter] = useState([])
+  var coordsArray = []
 
-        setPolylineCoordsArray(coordsForPolyline)
-        const indexOfLastItemInCoordsArray = coordsForPolyline.length - 1
-        const mapCenterCoords = coordsForPolyline[indexOfLastItemInCoordsArray]
-        setMapCenter(mapCenterCoords)
+  useEffect(() => {
+    const q = query(
+      collection(db, `vehicles`, `484-lng-52q-452`, `providedWaypoints`),
+    )
+    const unsub = onSnapshot(q, (querySnapshot) => {
+      coordsArray = [] //TEST COMMAND - TO PREVENT LINES JOINING ORIGIN AND CURRENT POINT AFTER EVERY UPDATE. REMOVE IF NECESSARY.
+      querySnapshot.forEach((doc) => {
+        const toTimestamp = (strDate) => {
+          const dt = Date.parse(strDate)
+          return dt / 1000
+        }
+
+        //console.log(doc.data())
+        coordsArray.push([doc.data().latitude, doc.data().longitude])
+
+        //console.log(coordsArray)
       })
-      console.log(JSON.stringify(coordsForPolyline))
+      setPolylineCoordsArray(coordsArray)
+      setMapCenter(coordsArray[coordsArray.length - 1])
+      //console.log(`END`)
     })
+    return () => unsub
   }, [])
+  //console.log(polylineCoordsArray)
+
   return (
     <div className="mapHolder">
       <ReactBingmaps
         bingmapKey={process.env.REACT_APP_BING_MAPS_API_KEY}
-        navigationBarMode={'square'}
+        navigationBarMode={'none'}
         mapTypeId={'road'}
         center={mapCenter}
         const
         pushPins={[
           {
-            location: [9.9612851, 76.3095904],
-            option: { color: 'green' },
-          },
-          {
-            location: [9.4061832216136, 76.350925712814],
-            option: { color: 'green' },
-          },
-          {
-            location: [8.8941318360417, 76.863270016097],
-            option: { color: 'green' },
-          },
-          {
-            location: [8.661555317559, 76.91072186433],
+            location: mapCenter,
             option: { color: 'green' },
           },
         ]}
@@ -53,7 +53,8 @@ function MapHolder() {
           location: polylineCoordsArray,
           option: {
             strokeColor: 'green',
-            strokeThickness: 5,
+            strokeThickness: 3,
+            strokeDashArray: [3, 1.5],
           },
         }}
       ></ReactBingmaps>
