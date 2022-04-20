@@ -1,3 +1,8 @@
+This is the front end code of knoWhere, a realtime vehicle tracking app in progress. knoWhere has a NodeJS based backend server, uses Google Firestore, and a couple of APIs including Bing Maps and Open Cage.
+
+
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
